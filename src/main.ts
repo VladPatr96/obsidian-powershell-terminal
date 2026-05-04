@@ -1,8 +1,10 @@
 import { Plugin, WorkspaceLeaf } from 'obsidian'
+import { join } from 'path'
 import { TerminalView, VIEW_TYPE } from './TerminalView'
 import { ProfileManager } from './ProfileManager'
 import { SettingsTab } from './SettingsTab'
 import { PluginSettings, DEFAULT_SETTINGS } from './types'
+import { setPluginDir } from './ShellProcess'
 
 export default class PowerShellTerminalPlugin extends Plugin {
   settings!: PluginSettings
@@ -11,6 +13,9 @@ export default class PowerShellTerminalPlugin extends Plugin {
   async onload(): Promise<void> {
     await this.loadSettings()
     this.profileManager = new ProfileManager(this.settings, () => this.saveSettings())
+
+    const vaultPath = (this.app.vault.adapter as any).basePath as string
+    setPluginDir(join(vaultPath, '.obsidian', 'plugins', this.manifest.id))
 
     this.registerView(VIEW_TYPE, (leaf) => new TerminalView(leaf, this))
     this.addSettingTab(new SettingsTab(this.app, this))

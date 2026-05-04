@@ -1,69 +1,75 @@
 import { EventEmitter } from 'events'
-import { spawn, ChildProcess } from 'child_process'
+import { join } from 'path'
 import { Profile } from './types'
+import type { IPty, IWindowsPtyForkOptions } from 'node-pty'
+
+type NodePtyModule = {
+  spawn(file: string, args: string[], options: IWindowsPtyForkOptions): IPty
+}
+
+let _pluginDir = ''
+let _nodePty: NodePtyModule | null = null
+
+// Called from main.ts onload() before any terminal is opened
+export function setPluginDir(dir: string): void {
+  _pluginDir = dir
+  _nodePty = null // reset cache if plugin dir changes
+}
+
+function getNodePty(): NodePtyModule {
+  if (!_nodePty) {
+    if (!_pluginDir) throw new Error('PowerShell Terminal: plugin dir not initialised')
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    _nodePty = require(join(_pluginDir, 'node_modules', 'node-pty')) as NodePtyModule
+  }
+  return _nodePty
+}
 
 export class ShellProcess extends EventEmitter {
-  private proc: ChildProcess | null = null
+  private pty: IPty | null = null
 
-  spawn(profile: Profile, cwd: string): void {
-    this.proc = spawn(
-      profile.shell,
-      ['-NoLogo', '-NoExit', ...profile.args],
-      {
-        cwd,
-        env: { ...process.env, ...profile.env },
-        stdio: 'pipe',
-        windowsHide: true,
-      }
-    )
-
-    this.proc.stdout!.on('data', (chunk: Buffer) => {
-      this.emit('data', chunk.toString('utf8'))
-    })
-    this.proc.stderr!.on('data', (chunk: Buffer) => {
-      this.emit('data', chunk.toString('utf8'))
-    })
-    this.proc.on('exit', (code: number | null) => {
-      this.emit('exit', code ?? -1)
-      this.proc = null
-    })
-    this.proc.on('error', (err: Error) => {
-      this.emit('error', err)
-      this.proc = null
+  spawn(profile: Profile, cwd: string, cols: number, rows: number): void {
+    const pty = getNodePty()
+    this.pty = pty.spawn(profile.shell, profile.args, {
+      name: 'xterm-color',
+      cols,
+      rows,
+      cwd,
+      env: { ...process.env, ...profile.env } as Record<string, string>,
+      useConpty: true,
     })
 
-    // Workaround: PowerShell без PTY использует 80 колонок по умолчанию
-    setTimeout(() => {
-      if (this.isAlive) {
-        this.write('$Host.UI.RawUI.BufferSize = New-Object Management.Automation.Host.Size(200, 9999)\r\n')
-      }
-    }, 200)
+    this.pty.onData((data: string) => this.emit('data', data))
+    this.pty.onExit(({ exitCode }: { exitCode: number }) => {
+      this.emit('exit', exitCode)
+      this.pty = null
+    })
 
     if (profile.startupCommands.length > 0) {
       setTimeout(() => {
         for (const cmd of profile.startupCommands) {
-          this.write(cmd + '\r\n')
+          this.write(cmd + '\r')
         }
       }, 500)
     }
   }
 
   write(data: string): void {
-    if (!this.isAlive) return
-    this.proc!.stdin!.write(data)
+    if (!this.pty) return
+    try { this.pty.write(data) } catch {}
+  }
+
+  resize(cols: number, rows: number): void {
+    if (!this.pty) return
+    try { this.pty.resize(cols, rows) } catch {}
   }
 
   kill(): void {
-    if (!this.isAlive) return
-    this.proc!.kill()
-    this.proc = null
+    if (!this.pty) return
+    try { this.pty.kill() } catch {}
+    this.pty = null
   }
 
-  get isAlive(): boolean {
-    return this.proc !== null && this.proc.exitCode === null
-  }
-
-  get pid(): number | undefined {
-    return this.proc?.pid
-  }
+  get isAlive(): boolean { return this.pty !== null }
+  get pid(): number | undefined { return this.pty?.pid }
 }

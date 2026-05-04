@@ -58,10 +58,13 @@ export class TerminalView extends ItemView {
     this.terminal.open(el)
     this.fitAddon.fit()
     this.resizeObserver = new ResizeObserver(() => {
-      try { this.fitAddon?.fit() } catch {}
+      try {
+        this.fitAddon?.fit()
+      } catch {}
     })
     this.resizeObserver.observe(el)
     this.terminal.onData((data) => this.shellProcess?.write(data))
+    this.terminal.onResize(({ cols, rows }) => this.shellProcess?.resize(cols, rows))
   }
 
   private connectProcess(profile: Profile): void {
@@ -81,7 +84,9 @@ export class TerminalView extends ItemView {
     this.shellProcess.on('error', (err: Error) => {
       this.terminal?.write(`\r\n\x1b[31m[Error: ${err.message}]\x1b[0m\r\n`)
     })
-    this.shellProcess.spawn({ ...profile, startupCommands: resolvedCommands }, cwd)
+    const cols = this.terminal?.cols ?? 80
+    const rows = this.terminal?.rows ?? 30
+    this.shellProcess.spawn({ ...profile, startupCommands: resolvedCommands }, cwd, cols, rows)
   }
 
   async onClose(): Promise<void> {

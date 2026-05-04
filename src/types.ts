@@ -22,7 +22,7 @@ export const DEFAULT_PROFILE: Profile = {
   id: 'default-win32',
   name: 'PowerShell',
   shell: 'powershell.exe',
-  args: [],
+  args: ['-NoLogo', '-NoExit'],
   env: {},
   startupCommands: [],
   startDir: 'vault',
