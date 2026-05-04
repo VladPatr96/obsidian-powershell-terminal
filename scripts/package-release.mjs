@@ -73,8 +73,8 @@ copyDir(
   (f) => f.endsWith('.pdb')
 )
 
-// ── Create ZIP ────────────────────────────────────────────────────────────────
-console.log('Creating ZIP...')
+// ── Create plugin ZIP ─────────────────────────────────────────────────────────
+console.log('Creating powershell-terminal.zip...')
 const zipPath = join(ROOT, 'release', 'powershell-terminal.zip')
 const zip = spawnSync('powershell', [
   '-Command',
@@ -82,7 +82,20 @@ const zip = spawnSync('powershell', [
 ], { encoding: 'utf8', stdio: 'inherit' })
 if (zip.status !== 0) { console.error('ZIP failed'); process.exit(1) }
 
+// ── Create node-pty binaries ZIP ─────────────────────────────────────────────
+console.log('Creating node-pty-win32-x64.zip...')
+const nodePtyResult = spawnSync('node', ['scripts/package-node-pty.mjs'], {
+  cwd: ROOT,
+  encoding: 'utf8',
+  stdio: 'inherit',
+})
+if (nodePtyResult.status !== 0) { console.error('node-pty ZIP failed'); process.exit(1) }
+
 const sizeMB = (statSync(zipPath).size / 1048576).toFixed(1)
-console.log(`\nRelease ready: release/powershell-terminal.zip (${sizeMB} MB)`)
+const nodePtyZipPath = join(ROOT, 'release', 'node-pty-win32-x64.zip')
+const nodePtySizeMB = (statSync(nodePtyZipPath).size / 1048576).toFixed(1)
+console.log(`\nRelease ready:`)
+console.log(`  release/powershell-terminal.zip   (${sizeMB} MB) — full plugin for manual install`)
+console.log(`  release/node-pty-win32-x64.zip    (${nodePtySizeMB} MB) — binaries for auto-download`)
 console.log('  main.js  manifest.json  styles.css')
 console.log('  node_modules/node-pty/ (win32-x64 prebuilds + Obsidian patch)')

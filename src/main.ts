@@ -5,6 +5,7 @@ import { ProfileManager } from './ProfileManager'
 import { SettingsTab } from './SettingsTab'
 import { PluginSettings, DEFAULT_SETTINGS } from './types'
 import { setPluginDir } from './ShellProcess'
+import { isNodePtyInstalled, installNodePty } from './NodePtyInstaller'
 
 export default class PowerShellTerminalPlugin extends Plugin {
   settings!: PluginSettings
@@ -15,7 +16,12 @@ export default class PowerShellTerminalPlugin extends Plugin {
     this.profileManager = new ProfileManager(this.settings, () => this.saveSettings())
 
     const vaultPath = (this.app.vault.adapter as any).basePath as string
-    setPluginDir(join(vaultPath, '.obsidian', 'plugins', this.manifest.id))
+    const pluginDir = join(vaultPath, '.obsidian', 'plugins', this.manifest.id)
+    setPluginDir(pluginDir)
+
+    if (process.platform === 'win32' && !isNodePtyInstalled(pluginDir)) {
+      await installNodePty(pluginDir)
+    }
 
     this.registerView(VIEW_TYPE, (leaf) => new TerminalView(leaf, this))
     this.addSettingTab(new SettingsTab(this.app, this))

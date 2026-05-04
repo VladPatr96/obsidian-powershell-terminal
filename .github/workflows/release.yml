@@ -33,9 +33,20 @@ jobs:
         env:
           CI_BUILD: 'true'
 
+      - name: Copy individual files for release
+        run: |
+          copy release\powershell-terminal\main.js release\main.js
+          copy release\powershell-terminal\manifest.json release\manifest.json
+          copy release\powershell-terminal\styles.css release\styles.css
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: release/powershell-terminal.zip
+          files: |
+            release/main.js
+            release/manifest.json
+            release/styles.css
+            release/powershell-terminal.zip
+            release/node-pty-win32-x64.zip
           generate_release_notes: true
           fail_on_unmatched_files: true
