@@ -7,25 +7,30 @@ import { fileURLToPath } from 'url'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
-const VAULT_PLUGIN_DIR = 'C:\\Users\\Патраваев\\projects\\Second_brain\\.obsidian\\plugins\\powershell-terminal'
+// In CI there is no local vault — output to dist/ instead
+const IS_CI = process.env.CI_BUILD === 'true'
+const VAULT_PLUGIN_DIR = IS_CI
+  ? join(__dirname, 'dist')
+  : 'C:\\Users\\Патраваев\\projects\\Second_brain\\.obsidian\\plugins\\powershell-terminal'
 
 if (!existsSync(VAULT_PLUGIN_DIR)) mkdirSync(VAULT_PLUGIN_DIR, { recursive: true })
 
 const prod = process.argv[2] === 'production'
 
 function copyNodePtyToPlugin() {
+  if (IS_CI) return // package-release.mjs handles this in CI
   const src = join(__dirname, 'node_modules', 'node-pty')
   const dest = join(VAULT_PLUGIN_DIR, 'node_modules', 'node-pty')
-  // robocopy exit codes: 0=no change, 1=files copied OK, 8+=error
   const result = spawnSync('robocopy', [src, dest, '/E', '/XF', '*.pdb', '/NFL', '/NDL', '/NJH', '/NJS'], {
     encoding: 'utf8',
     windowsHide: true,
   })
+  // robocopy: 0 = no files, 1 = copied OK, 8+ = error
   if (result.status !== null && result.status >= 8) {
     throw new Error(`robocopy failed with exit code ${result.status}`)
   }
-  // Apply patch: override node-pty's windowsConoutConnection.js with the
-  // version that avoids Worker threads (not available in Obsidian renderer)
+  // Apply patch: override node-pty's windowsConoutConnection.js so it works
+  // without Worker threads (disabled in Obsidian's Electron renderer)
   copyFileSync(
     join(__dirname, 'patches', 'windowsConoutConnection.js'),
     join(VAULT_PLUGIN_DIR, 'node_modules', 'node-pty', 'lib', 'windowsConoutConnection.js')
@@ -49,7 +54,7 @@ const ctx = await esbuild.context({
   logLevel: 'info',
   sourcemap: prod ? false : 'inline',
   treeShaking: true,
-  outfile: `${VAULT_PLUGIN_DIR}/main.js`,
+  outfile: join(VAULT_PLUGIN_DIR, 'main.js'),
   plugins: [copyPlugin],
 })
 
