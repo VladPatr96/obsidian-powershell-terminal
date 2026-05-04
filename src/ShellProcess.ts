@@ -32,6 +32,13 @@ export class ShellProcess extends EventEmitter {
       this.proc = null
     })
 
+    // Workaround: PowerShell без PTY использует 80 колонок по умолчанию
+    setTimeout(() => {
+      if (this.isAlive) {
+        this.write('$Host.UI.RawUI.BufferSize = New-Object Management.Automation.Host.Size(200, 9999)\r\n')
+      }
+    }, 200)
+
     if (profile.startupCommands.length > 0) {
       setTimeout(() => {
         for (const cmd of profile.startupCommands) {

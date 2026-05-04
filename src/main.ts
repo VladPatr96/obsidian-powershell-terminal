@@ -22,6 +22,11 @@ export default class PowerShellTerminalPlugin extends Plugin {
     })
 
     this.addRibbonIcon('terminal', 'Open Terminal', () => this.activateView())
+
+    const statusBarItem = this.addStatusBarItem()
+    statusBarItem.setText('⬛ Terminal')
+    statusBarItem.style.cursor = 'pointer'
+    statusBarItem.addEventListener('click', () => this.activateView())
   }
 
   onunload(): void {
