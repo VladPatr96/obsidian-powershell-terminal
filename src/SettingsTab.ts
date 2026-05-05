@@ -94,12 +94,12 @@ class ProfileModal extends Modal {
 
     new Setting(contentEl)
       .setName('Shell executable')
-      .setDesc('Path to shell, e.g. powershell.exe, pwsh.exe, cmd.exe')
+      .setDesc('Full path to the shell executable')
       .addText((t) => t.setValue(draft.shell).onChange((v) => (draft.shell = v)))
 
     new Setting(contentEl)
       .setName('Arguments')
-      .setDesc('Space-separated, e.g. -NoLogo -NoExit')
+      .setDesc('Launch arguments, space-separated')
       .addText((t) =>
         t
           .setValue(draft.args.join(' '))
@@ -135,7 +135,7 @@ class ProfileModal extends Modal {
 
     new Setting(contentEl)
       .setName('Environment variables')
-      .setDesc('One per line: KEY=VALUE')
+      .setDesc('One per line, format: name=value')
       .addTextArea((ta) =>
         ta
           .setValue(Object.entries(draft.env).map(([k, v]) => `${k}=${v}`).join('\n'))
