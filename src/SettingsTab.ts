@@ -10,7 +10,8 @@ export class SettingsTab extends PluginSettingTab {
   display(): void {
     const { containerEl } = this
     containerEl.empty()
-    containerEl.createEl('h2', { text: 'PowerShell Terminal' })
+
+    new Setting(containerEl).setName('PowerShell Terminal').setHeading()
 
     new Setting(containerEl)
       .setName('Scrollback lines')
@@ -27,16 +28,15 @@ export class SettingsTab extends PluginSettingTab {
           })
       )
 
-    containerEl.createEl('h3', { text: 'Profiles' })
+    new Setting(containerEl).setName('Profiles').setHeading()
 
     for (const profile of this.plugin.profileManager.getAll()) {
       this.renderProfileRow(containerEl, profile)
     }
 
     new Setting(containerEl).addButton((btn) =>
-      btn.setButtonText('+ Add Profile').onClick(async () => {
-        const { id: _ignored, ...base } = DEFAULT_PROFILE
-        await this.plugin.profileManager.add({ ...base, name: 'New Profile' })
+      btn.setButtonText('Add profile').onClick(async () => {
+        await this.plugin.profileManager.add({ ...DEFAULT_PROFILE, name: 'New profile' })
         this.display()
       })
     )
@@ -54,7 +54,7 @@ export class SettingsTab extends PluginSettingTab {
       )
       .addButton((btn) =>
         btn
-          .setButtonText('Set Default')
+          .setButtonText('Set default')
           .setDisabled(isDefault)
           .onClick(async () => {
             await this.plugin.profileManager.setDefault(profile.id)
@@ -85,7 +85,8 @@ class ProfileModal extends Modal {
 
   onOpen(): void {
     const { contentEl } = this
-    contentEl.createEl('h2', { text: `Edit Profile: ${this.profile.name}` })
+
+    new Setting(contentEl).setName(`Edit profile: ${this.profile.name}`).setHeading()
 
     const draft: Profile = { ...this.profile }
 
@@ -120,7 +121,7 @@ class ProfileModal extends Modal {
 
     new Setting(contentEl)
       .setName('Custom start path')
-      .setDesc('Only used when Start directory = Custom')
+      .setDesc('Only used when start directory = custom')
       .addText((t) =>
         t.setValue(draft.customStartDir).onChange((v) => (draft.customStartDir = v))
       )

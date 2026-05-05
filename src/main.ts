@@ -1,4 +1,4 @@
-import { Plugin, WorkspaceLeaf } from 'obsidian'
+import { FileSystemAdapter, Plugin } from 'obsidian'
 import { join } from 'path'
 import { TerminalView, VIEW_TYPE } from './TerminalView'
 import { ProfileManager } from './ProfileManager'
@@ -15,8 +15,8 @@ export default class PowerShellTerminalPlugin extends Plugin {
     await this.loadSettings()
     this.profileManager = new ProfileManager(this.settings, () => this.saveSettings())
 
-    const vaultPath = (this.app.vault.adapter as any).basePath as string
-    const pluginDir = join(vaultPath, '.obsidian', 'plugins', this.manifest.id)
+    const adapter = this.app.vault.adapter as FileSystemAdapter
+    const pluginDir = join(adapter.basePath, this.app.vault.configDir, 'plugins', this.manifest.id)
     setPluginDir(pluginDir)
 
     if (process.platform === 'win32' && !isNodePtyInstalled(pluginDir)) {
@@ -28,16 +28,16 @@ export default class PowerShellTerminalPlugin extends Plugin {
 
     this.addCommand({
       id: 'open-terminal',
-      name: 'Open Terminal',
-      callback: () => this.activateView(),
+      name: 'Open terminal',
+      callback: () => { void this.activateView() },
     })
 
-    this.addRibbonIcon('terminal', 'Open Terminal', () => this.activateView())
+    this.addRibbonIcon('terminal', 'Open terminal', () => { void this.activateView() })
 
     const statusBarItem = this.addStatusBarItem()
     statusBarItem.setText('⬛ Terminal')
-    statusBarItem.style.cursor = 'pointer'
-    statusBarItem.addEventListener('click', () => this.activateView())
+    statusBarItem.addClass('pst-status-bar-item')
+    statusBarItem.addEventListener('click', () => { void this.activateView() })
   }
 
   onunload(): void {

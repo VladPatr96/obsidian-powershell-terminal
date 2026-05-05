@@ -1,7 +1,7 @@
 {
   "id": "powershell-terminal",
   "name": "PowerShell Terminal",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "minAppVersion": "1.4.0",
   "description": "Embedded PowerShell terminal for Windows using ConPTY. Full keyboard support - arrows, Tab completion, PSReadLine, Ctrl shortcuts.",
   "author": "Vlad Patravaev",

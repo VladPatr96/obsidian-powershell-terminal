@@ -1,4 +1,5 @@
-import { ItemView, WorkspaceLeaf } from 'obsidian'
+import { FileSystemAdapter, ItemView, WorkspaceLeaf } from 'obsidian'
+import { homedir } from 'os'
 import { Terminal } from '@xterm/xterm'
 import { FitAddon } from '@xterm/addon-fit'
 import { WebLinksAddon } from '@xterm/addon-web-links'
@@ -22,10 +23,10 @@ export class TerminalView extends ItemView {
   getDisplayText(): string { return 'Terminal' }
   getIcon(): string { return 'terminal' }
 
-  async onOpen(): Promise<void> {
+  onOpen(): void {
     const content = this.containerEl.children[1] as HTMLElement
     content.empty()
-    content.style.cssText = 'padding:0;overflow:hidden;height:100%;'
+    content.addClass('pst-terminal-content')
     const profile = this.plugin.profileManager.getDefault()
     const termEl = content.createDiv({ cls: 'pst-terminal' })
     this.initTerminal(termEl, profile)
@@ -60,7 +61,7 @@ export class TerminalView extends ItemView {
     this.resizeObserver = new ResizeObserver(() => {
       try {
         this.fitAddon?.fit()
-      } catch {}
+      } catch { /* fit() may fail if terminal was disposed */ }
     })
     this.resizeObserver.observe(el)
     this.terminal.onData((data) => this.shellProcess?.write(data))
@@ -68,10 +69,11 @@ export class TerminalView extends ItemView {
   }
 
   private connectProcess(profile: Profile): void {
-    const vaultPath = (this.app.vault.adapter as any).basePath as string ?? ''
+    const adapter = this.app.vault.adapter as FileSystemAdapter
+    const vaultPath = adapter.basePath
     const cwd =
       profile.startDir === 'vault' ? vaultPath
-      : profile.startDir === 'home' ? require('os').homedir()
+      : profile.startDir === 'home' ? homedir()
       : profile.customStartDir || vaultPath
     const resolvedCommands = profile.startupCommands.map((cmd) =>
       cmd.replace(/\{\{vault\}\}/g, vaultPath)
@@ -89,7 +91,7 @@ export class TerminalView extends ItemView {
     this.shellProcess.spawn({ ...profile, startupCommands: resolvedCommands }, cwd, cols, rows)
   }
 
-  async onClose(): Promise<void> {
+  onClose(): void {
     this.resizeObserver?.disconnect()
     this.shellProcess?.kill()
     this.terminal?.dispose()

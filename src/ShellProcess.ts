@@ -19,7 +19,7 @@ export function setPluginDir(dir: string): void {
 function getNodePty(): NodePtyModule {
   if (!_nodePty) {
     if (!_pluginDir) throw new Error('PowerShell Terminal: plugin dir not initialised')
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    // eslint-disable-next-line @typescript-eslint/no-require-imports -- node-pty must be loaded at runtime via absolute path; Electron overrides require() resolution and bare specifiers don't resolve to plugin node_modules
     _nodePty = require(join(_pluginDir, 'node_modules', 'node-pty')) as NodePtyModule
   }
   return _nodePty
@@ -56,17 +56,17 @@ export class ShellProcess extends EventEmitter {
 
   write(data: string): void {
     if (!this.pty) return
-    try { this.pty.write(data) } catch {}
+    try { this.pty.write(data) } catch { /* process may have closed */ }
   }
 
   resize(cols: number, rows: number): void {
     if (!this.pty) return
-    try { this.pty.resize(cols, rows) } catch {}
+    try { this.pty.resize(cols, rows) } catch { /* process may have closed */ }
   }
 
   kill(): void {
     if (!this.pty) return
-    try { this.pty.kill() } catch {}
+    try { this.pty.kill() } catch { /* process may have closed */ }
     this.pty = null
   }
 
