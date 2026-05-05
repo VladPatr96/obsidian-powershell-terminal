@@ -44,6 +44,6 @@ export async function installNodePty(pluginDir: string): Promise<void> {
       10_000
     )
   } finally {
-    if (existsSync(zipPath)) try { unlinkSync(zipPath) } catch {}
+    if (existsSync(zipPath)) try { unlinkSync(zipPath) } catch { /* ignore cleanup failure */ }
   }
 }

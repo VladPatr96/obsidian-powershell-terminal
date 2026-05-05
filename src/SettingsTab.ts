@@ -11,8 +11,6 @@ export class SettingsTab extends PluginSettingTab {
     const { containerEl } = this
     containerEl.empty()
 
-    new Setting(containerEl).setName('PowerShell Terminal').setHeading()
-
     new Setting(containerEl)
       .setName('Scrollback lines')
       .setDesc('Number of lines kept in terminal history (restart terminal to apply)')
@@ -35,9 +33,9 @@ export class SettingsTab extends PluginSettingTab {
     }
 
     new Setting(containerEl).addButton((btn) =>
-      btn.setButtonText('Add profile').onClick(async () => {
-        await this.plugin.profileManager.add({ ...DEFAULT_PROFILE, name: 'New profile' })
-        this.display()
+      btn.setButtonText('Add profile').onClick(() => {
+        void this.plugin.profileManager.add({ ...DEFAULT_PROFILE, name: 'New profile' })
+          .then(() => this.display())
       })
     )
   }
@@ -56,18 +54,18 @@ export class SettingsTab extends PluginSettingTab {
         btn
           .setButtonText('Set default')
           .setDisabled(isDefault)
-          .onClick(async () => {
-            await this.plugin.profileManager.setDefault(profile.id)
-            this.display()
+          .onClick(() => {
+            void this.plugin.profileManager.setDefault(profile.id)
+              .then(() => this.display())
           })
       )
       .addButton((btn) =>
         btn
           .setButtonText('Delete')
           .setDisabled(this.plugin.profileManager.getAll().length <= 1)
-          .onClick(async () => {
-            await this.plugin.profileManager.remove(profile.id)
-            this.display()
+          .onClick(() => {
+            void this.plugin.profileManager.remove(profile.id)
+              .then(() => this.display())
           })
       )
   }
@@ -96,7 +94,7 @@ class ProfileModal extends Modal {
 
     new Setting(contentEl)
       .setName('Shell executable')
-      .setDesc('e.g. powershell.exe, pwsh.exe, cmd.exe')
+      .setDesc('Path to shell, e.g. powershell.exe, pwsh.exe, cmd.exe')
       .addText((t) => t.setValue(draft.shell).onChange((v) => (draft.shell = v)))
 
     new Setting(contentEl)
@@ -174,10 +172,12 @@ class ProfileModal extends Modal {
         btn
           .setButtonText('Save')
           .setCta()
-          .onClick(async () => {
-            await this.plugin.profileManager.update(this.profile.id, draft)
-            this.onSave()
-            this.close()
+          .onClick(() => {
+            void this.plugin.profileManager.update(this.profile.id, draft)
+              .then(() => {
+                this.onSave()
+                this.close()
+              })
           })
       )
       .addButton((btn) => btn.setButtonText('Cancel').onClick(() => this.close()))
