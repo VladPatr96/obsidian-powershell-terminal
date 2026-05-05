@@ -35,7 +35,7 @@ export default class PowerShellTerminalPlugin extends Plugin {
     this.addRibbonIcon('terminal', 'Open terminal', () => { void this.activateView() })
 
     const statusBarItem = this.addStatusBarItem()
-    statusBarItem.setText('⬛ Terminal')
+    statusBarItem.setText('⬛ terminal')
     statusBarItem.addClass('pst-status-bar-item')
     statusBarItem.addEventListener('click', () => { void this.activateView() })
   }
@@ -49,13 +49,13 @@ export default class PowerShellTerminalPlugin extends Plugin {
     const existing = workspace.getLeavesOfType(VIEW_TYPE)
 
     if (existing.length > 0) {
-      workspace.revealLeaf(existing[0])
+      await workspace.revealLeaf(existing[0])
       return
     }
 
     const leaf = workspace.getLeaf('tab')
     await leaf.setViewState({ type: VIEW_TYPE, active: true })
-    workspace.revealLeaf(leaf)
+    await workspace.revealLeaf(leaf)
   }
 
   async loadSettings(): Promise<void> {

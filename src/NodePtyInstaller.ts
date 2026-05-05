@@ -11,7 +11,7 @@ export function isNodePtyInstalled(pluginDir: string): boolean {
 }
 
 export async function installNodePty(pluginDir: string): Promise<void> {
-  const notice = new Notice('PowerShell Terminal: downloading terminal engine (first-time setup)…', 0)
+  const notice = new Notice('PowerShell terminal: downloading terminal engine (first-time setup)…', 0)
 
   const zipPath = join(pluginDir, 'node-pty-tmp.zip')
 
